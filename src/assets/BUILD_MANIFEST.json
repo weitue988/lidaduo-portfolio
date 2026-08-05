@@ -1,0 +1,113 @@
+{
+  "caseId": "003-racism-book-page-turn",
+  "mode": "visual-replacement-building",
+  "sourceRuntime": "../reference-replica/",
+  "protectedRuntimeHash": "8ec914e0513181d165cf787398f84d06be62ec427640c964289464ac29a198a6",
+  "protectedAssets": {
+    "cover_blender.a3d644b2.glb": "cea05a9c5902468b68091e555935624d065f4ebe6782123e68ff059d8773fac3",
+    "page_blender.c0989f10.glb": "58cdc2c92cc4da093af8ab0283297881c90717e269447a66e7adac632b5e5e1d",
+    "roughness_2.4c20e531.jpg": "b8d2e366a9c0016258c4a1d4304dfe0b60e10536f27a06868db3f2131b577720",
+    "bump.79691ae4.jpg": "5b3170ceaa43a1ba5bdcbc2d171366e63b89744da7cee15741c82dccc17561dd",
+    "normal.1f0c6ba6.jpg": "f27b25d6951f78bafd36f48d509a09d7ced75ea5f4e2cfdc558f76ea31acb17c",
+    "bg.707b1e7c.jpg": "80175f652c30003259ee76725b0b2f12e5d8d999ac72169bc8747a4088447521"
+  },
+  "slots": {
+    "cover.png": "user-slot",
+    "back-cover.png": "user-slot",
+    "project-\u76ee\u5f55.png": "user-slot:project-\u76ee\u5f55.png",
+    "project-\u4e2a\u4eba\u7b80\u4ecb.png": "user-slot:project-\u4e2a\u4eba\u7b80\u4ecb.png",
+    "project-\u80fd\u529b\u4ef7\u503c.png": "user-slot:project-\u80fd\u529b\u4ef7\u503c.png",
+    "project-01.png": "user-slot:project-01.png",
+    "project-02.png": "user-slot:project-02.png",
+    "project-03.png": "user-slot:project-03.png",
+    "project-04.png": "user-slot:project-04.png",
+    "project-05.png": "user-slot:project-05.png",
+    "project-06.png": "user-slot:project-06.png",
+    "project-07.png": "user-slot:project-07.png",
+    "project-08.png": "user-slot:project-08.png"
+  },
+  "pageCount": 11,
+  "originalArtworkPresent": false,
+  "spreads": [
+    {
+      "runtimeIndex": 1,
+      "id": "front-directory",
+      "runtimeFile": "front-directory.png",
+      "slotStatus": "user-slot:project-\u76ee\u5f55.png"
+    },
+    {
+      "runtimeIndex": 2,
+      "id": "front-profile",
+      "runtimeFile": "front-profile.png",
+      "slotStatus": "user-slot:project-\u4e2a\u4eba\u7b80\u4ecb.png"
+    },
+    {
+      "runtimeIndex": 3,
+      "id": "front-capability",
+      "runtimeFile": "front-capability.png",
+      "slotStatus": "user-slot:project-\u80fd\u529b\u4ef7\u503c.png"
+    },
+    {
+      "runtimeIndex": 4,
+      "id": "project-01",
+      "runtimeFile": "project-01.png",
+      "slotStatus": "user-slot:project-01.png"
+    },
+    {
+      "runtimeIndex": 5,
+      "id": "project-02",
+      "runtimeFile": "project-02.png",
+      "slotStatus": "user-slot:project-02.png"
+    },
+    {
+      "runtimeIndex": 6,
+      "id": "project-03",
+      "runtimeFile": "project-03.png",
+      "slotStatus": "user-slot:project-03.png"
+    },
+    {
+      "runtimeIndex": 7,
+      "id": "project-04",
+      "runtimeFile": "project-04.png",
+      "slotStatus": "user-slot:project-04.png"
+    },
+    {
+      "runtimeIndex": 8,
+      "id": "project-05",
+      "runtimeFile": "project-05.png",
+      "slotStatus": "user-slot:project-05.png"
+    },
+    {
+      "runtimeIndex": 9,
+      "id": "project-06",
+      "runtimeFile": "project-06.png",
+      "slotStatus": "user-slot:project-06.png"
+    },
+    {
+      "runtimeIndex": 10,
+      "id": "project-07",
+      "runtimeFile": "project-07.png",
+      "slotStatus": "user-slot:project-07.png"
+    },
+    {
+      "runtimeIndex": 11,
+      "id": "project-08",
+      "runtimeFile": "project-08.png",
+      "slotStatus": "user-slot:project-08.png"
+    }
+  ],
+  "project03": {
+    "mode": "static-user-slot",
+    "runtimeIndex": 6,
+    "source": "project-03.png"
+  },
+  "backCoverRuntimeTransform": "mirror-x-for-back-face-uv",
+  "typography": {
+    "title": "Alimama ShuHeiTi",
+    "body": "Alibaba PuHuiTi 2.0 55 Regular",
+    "assets": [
+      "alimamashuheiti.ttf",
+      "AlibabaPuHuiTi-2-55-Regular.ttf"
+    ]
+  }
+}
