@@ -1,0 +1,10 @@
+{
+  "name": "LightRays-JS-CSS",
+  "title": "LightRays",
+  "description": "Volumetric light rays/beams with customizable direction.",
+  "dependencies": [
+    "ogl@^1.0.11"
+  ],
+  "source": "https://reactbits.dev/backgrounds/light-rays",
+  "studio": "https://reactbits.dev/tools/background-studio?bg=light-rays&raysColor=ebf3a8&lightSpread=0.5&rayLength=3&pulsating=true&saturation=1.3&mouseInfluence=0.2"
+}
