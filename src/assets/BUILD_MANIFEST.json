@@ -97,9 +97,12 @@
     }
   ],
   "project03": {
-    "mode": "static-user-slot",
+    "mode": "case001-interactive-holographic-card",
     "runtimeIndex": 6,
-    "source": "project-03.png"
+    "source": "project-03.png:left-page + project-01.png:right-paper",
+    "adapter": "project-03-case001-holographic-adapter.js",
+    "asset": "project-03-lion-avatar.png",
+    "interaction": "tilt + parallax + foil + click/drag/long-press flip"
   },
   "backCoverRuntimeTransform": "mirror-x-for-back-face-uv",
   "typography": {
@@ -109,5 +112,69 @@
       "alimamashuheiti.ttf",
       "AlibabaPuHuiTi-2-55-Regular.ttf"
     ]
+  },
+  "motion": {
+    "autoOpenVisibleMs": 5000,
+    "globalBackground": {
+      "adapter": "light-rays-three-adapter.js",
+      "queryOff": "lightRays=off"
+    },
+    "aurora": {
+      "adapter": "aurora-three-adapter.js",
+      "scope": "coverMaterial",
+      "queryOff": "aurora=off"
+    },
+    "textDepth": {
+      "adapter": "cover-text-depth-adapter.js",
+      "coverLayer": "cover-text-overlay.png",
+      "coverParallaxPx": {
+        "x": 10,
+        "y": 8
+      },
+      "smoothing": 0.16,
+      "pageLayer": "transparent-overlay-03",
+      "pageParallax": {
+        "x": 0,
+        "y": 0
+      },
+      "queryOff": "textDepth=off"
+    },
+    "project01CardSwap": {
+      "adapter": "project-01-card-swap-adapter.js",
+      "pageMaterialIndex": 3,
+      "pageIndex": 4,
+      "cards": [
+        {
+          "name": "\u9996\u9875",
+          "asset": "card-swap-home.png"
+        },
+        {
+          "name": "\u8bca\u65ad\u6d4b\u8bd5\u9898",
+          "asset": "card-swap-diagnostic.png"
+        },
+        {
+          "name": "\u77e5\u8bc6\u56fe\u8c31",
+          "asset": "card-swap-knowledge-map.png"
+        }
+      ],
+      "swapIntervalMs": 5000,
+      "swapDurationMs": 2350,
+      "timelineMs": {
+        "drop": 2000,
+        "promoteAt": 200,
+        "returnAt": 300,
+        "move": 2000,
+        "return": 2000,
+        "stagger": 150
+      },
+      "queryOff": "cardSwap=off"
+    },
+    "project03Case001": {
+      "adapter": "project-03-case001-holographic-adapter.js",
+      "pageIndex": 6,
+      "asset": "project-03-lion-avatar.png",
+      "queryOff": "project03Case001=off"
+    },
+    "reducedMotion": "prefers-reduced-motion: reduce"
   }
 }
