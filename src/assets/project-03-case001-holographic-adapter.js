@@ -46,6 +46,11 @@
   style.textContent = `
     #project03Case001Root {
       --p03-scale: 1;
+      --p03-page-x: 0px;
+      --p03-page-y: 0px;
+      --p03-page-rotate: 0deg;
+      --p03-page-scale-x: 1;
+      --p03-page-opacity: 1;
       position: fixed;
       left: 50%;
       top: 50%;
@@ -66,6 +71,19 @@
     #project03Case001Root.is-visible {
       opacity: 1;
       visibility: visible;
+    }
+
+    #project03Case001Root .p03-showcase {
+      transform: translate3d(var(--p03-page-x), var(--p03-page-y), 0)
+        rotateY(var(--p03-page-rotate))
+        scaleX(var(--p03-page-scale-x));
+      transform-origin: 0% 50%;
+      opacity: var(--p03-page-opacity);
+      will-change: transform, opacity;
+    }
+
+    #project03Case001Root.is-flipping .p03-showcase {
+      pointer-events: none;
     }
 
     #project03Case001Root.is-interactive {
@@ -442,6 +460,7 @@
   const state = {
     enabled: true,
     active: false,
+    occupying: false,
     spin: 0,
     dragging: false,
     dragStartX: 0,
@@ -750,11 +769,52 @@
   }
 
   function isStableProject03(view) {
-    if (!view || view.currPageIndex !== PAGE_INDEX || view.ENTERED !== true || document.hidden) return false;
+    const state = getPageEmbedState(view);
+    return state.stable;
+  }
+
+  function getPageEmbedState(view) {
+    if (!view || view.ENTERED !== true || document.hidden) {
+      return { occupied: false, stable: false, phase: 0, direction: 0, progress: -1 };
+    }
+
     const timelineProgress = view.flipTimeline && typeof view.flipTimeline.progress === "function"
       ? view.flipTimeline.progress()
       : -1;
-    return Math.abs(timelineProgress - TARGET_PROGRESS) < PROGRESS_EPSILON;
+    const pageCount = Number(view.pageDatas && view.pageDatas.length) + 1 || 12;
+    const segment = 1 / pageCount;
+    const delta = timelineProgress - TARGET_PROGRESS;
+    const isAdjacentPage = view.currPageIndex === PAGE_INDEX - 1
+      || view.currPageIndex === PAGE_INDEX
+      || view.currPageIndex === PAGE_INDEX + 1;
+    const occupied = isAdjacentPage && delta >= -segment - PROGRESS_EPSILON && delta <= segment + PROGRESS_EPSILON;
+    const stable = view.currPageIndex === PAGE_INDEX && Math.abs(delta) < PROGRESS_EPSILON;
+    const phase = delta < 0
+      ? clamp((delta + segment) / segment, 0, 1)
+      : clamp(1 - delta / segment, 0, 1);
+
+    return {
+      occupied,
+      stable,
+      phase,
+      direction: delta >= 0 ? -1 : 1,
+      progress: timelineProgress,
+    };
+  }
+
+  function setPageLocalPose(embedState) {
+    const phase = embedState.phase;
+    const edgeAmount = 1 - phase;
+    const pageRotate = embedState.stable ? 0 : embedState.direction * 82 * edgeAmount;
+    const pageScaleX = embedState.stable ? 1 : 0.14 + 0.86 * phase;
+    const pageOpacity = embedState.stable ? 1 : 0.38 + 0.62 * phase;
+    const pageX = embedState.stable ? 0 : -10 * edgeAmount;
+
+    root.style.setProperty("--p03-page-x", `${pageX}px`);
+    root.style.setProperty("--p03-page-y", "0px");
+    root.style.setProperty("--p03-page-rotate", `${pageRotate}deg`);
+    root.style.setProperty("--p03-page-scale-x", `${pageScaleX}`);
+    root.style.setProperty("--p03-page-opacity", `${pageOpacity}`);
   }
 
   function positionRoot(view) {
@@ -771,30 +831,38 @@
   function frame() {
     const view = getView();
     if (view) state.view = view;
-    const active = isStableProject03(view);
-    if (active) {
+    const embedState = getPageEmbedState(view);
+    const active = embedState.stable;
+    if (embedState.occupied) {
       positionRoot(view);
-      if (!state.active) {
-        state.active = true;
-        state.status = "active";
-        root.classList.add("is-visible", "is-interactive");
-        root.setAttribute("aria-hidden", "false");
-      }
-    } else if (state.active) {
+      setPageLocalPose(embedState);
+      state.active = active;
+      state.occupying = true;
+      state.status = active ? "active" : "flipping-with-page";
+      root.classList.toggle("is-flipping", !active);
+      root.classList.add("is-visible");
+      root.classList.toggle("is-interactive", active);
+      root.setAttribute("aria-hidden", active ? "false" : "true");
+    } else if (state.occupying) {
       state.active = false;
+      state.occupying = false;
       state.status = "hidden";
-      root.classList.remove("is-visible", "is-interactive");
+      root.classList.remove("is-visible", "is-interactive", "is-flipping");
       root.setAttribute("aria-hidden", "true");
       resetCard();
+      setPageLocalPose({ stable: true, phase: 1, direction: 0 });
     } else if (!view) {
       state.status = "waiting-for-view";
+    } else {
+      state.status = "outside-page-window";
     }
     requestAnimationFrame(frame);
   }
 
   document.addEventListener("visibilitychange", function onVisibilityChange() {
-    if (document.hidden && state.active) {
+    if (document.hidden && state.occupying) {
       state.active = false;
+      state.occupying = false;
       root.classList.remove("is-visible", "is-interactive");
       resetCard();
     }
