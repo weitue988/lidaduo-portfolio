@@ -787,11 +787,11 @@
     const isAdjacentPage = view.currPageIndex === PAGE_INDEX - 1
       || view.currPageIndex === PAGE_INDEX
       || view.currPageIndex === PAGE_INDEX + 1;
-    const occupied = isAdjacentPage && delta >= -segment - PROGRESS_EPSILON && delta <= segment + PROGRESS_EPSILON;
     const stable = view.currPageIndex === PAGE_INDEX && Math.abs(delta) < PROGRESS_EPSILON;
     const phase = delta < 0
       ? clamp((delta + segment) / segment, 0, 1)
       : clamp(1 - delta / segment, 0, 1);
+    const occupied = isAdjacentPage && (stable || phase > PROGRESS_EPSILON);
 
     return {
       occupied,
@@ -806,8 +806,8 @@
     const phase = embedState.phase;
     const edgeAmount = 1 - phase;
     const pageRotate = embedState.stable ? 0 : embedState.direction * 82 * edgeAmount;
-    const pageScaleX = embedState.stable ? 1 : 0.14 + 0.86 * phase;
-    const pageOpacity = embedState.stable ? 1 : 0.38 + 0.62 * phase;
+    const pageScaleX = embedState.stable ? 1 : phase;
+    const pageOpacity = embedState.stable ? 1 : clamp(phase * 1.25, 0, 1);
     const pageX = embedState.stable ? 0 : -10 * edgeAmount;
 
     root.style.setProperty("--p03-page-x", `${pageX}px`);

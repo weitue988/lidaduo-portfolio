@@ -9,6 +9,7 @@
     "build": "vite build && npm run verify",
     "verify": "node scripts/verify-build.mjs",
     "qa:light-rays": "node scripts/verify-light-rays-background.mjs",
+    "qa:full": "node scripts/verify-full-portfolio.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "package:direct": "npm run build && rm -rf artifacts && mkdir -p artifacts && cd dist && zip -qr ../artifacts/lidaduo-portfolio-direct-upload.zip ."
   },
