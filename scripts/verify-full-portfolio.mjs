@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "/Users/lidaduo/.cursor/skills/pixel-diff/tools/node_modules/playwright-core/index.mjs";
 
@@ -9,6 +10,10 @@ const output = resolve(
 const chrome =
   process.env.CHROME_PATH ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const expectedAdapterMarker = createHash("sha256")
+  .update(await readFile(new URL("../src/assets/project-03-case001-holographic-adapter.js", import.meta.url)))
+  .digest("hex")
+  .slice(0, 12);
 
 await mkdir(output, { recursive: true });
 
@@ -97,7 +102,7 @@ const finalState = await page.evaluate(() => ({
     .find((src) => src.includes("project-03-case001-holographic-adapter.js")) || null,
 }));
 
-const result = { url, pageStates, finalState, errors };
+const result = { url, expectedAdapterMarker, pageStates, finalState, errors };
 await writeFile(`${output}/runtime-verification.json`, `${JSON.stringify(result, null, 2)}\n`);
 await browser.close();
 
@@ -120,7 +125,7 @@ const failed =
   finalState.canvasCount !== 1 ||
   finalState.resourcesVisible !== "visible" ||
   finalState.resourcesPointerEvents !== "all" ||
-  !finalState.adapterMarker?.includes("8c392359351c") ||
+  !finalState.adapterMarker?.includes(expectedAdapterMarker) ||
   errors.length > 0;
 
 if (failed) {

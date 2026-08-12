@@ -99,9 +99,23 @@
   "project03": {
     "mode": "case001-interactive-holographic-card",
     "runtimeIndex": 6,
-    "source": "project-03.png:left-page + project-01.png:right-paper",
+    "source": "project-03.png:left-page + project-01.png:right-paper; separate page-bound transition texture",
     "adapter": "project-03-case001-holographic-adapter.js",
     "asset": "project-03-lion-avatar.png",
+    "transitionProxy": {
+      "source": "source/runtime/project-03-transition-proxy.png",
+      "sha256": "35dcc508e0681d07db3e970d2389120e18d6a7fc4bf457197ca3099abb13e2e3",
+      "runtimePng": "images/06/project-03-transition.png",
+      "runtimeWebp": "images_webp/06/project-03-transition.webp",
+      "layout": {
+        "bookCssWidth": 1038,
+        "showcaseCssWidth": 460,
+        "showcaseCssHeight": 500,
+        "centerYOffsetCss": 10,
+        "textureWidth": 2100,
+        "textureHeight": 1200
+      }
+    },
     "interaction": "tilt + parallax + foil + click/drag/long-press flip"
   },
   "backCoverRuntimeTransform": "mirror-x-for-back-face-uv",
@@ -173,6 +187,7 @@
       "adapter": "project-03-case001-holographic-adapter.js",
       "pageIndex": 6,
       "asset": "project-03-lion-avatar.png",
+      "transitionProxy": "page-bound base texture; fixed DOM visible only at stable page 6",
       "queryOff": "project03Case001=off"
     },
     "reducedMotion": "prefers-reduced-motion: reduce"

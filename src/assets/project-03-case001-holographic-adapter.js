@@ -4,6 +4,7 @@
   const PAGE_INDEX = 6;
   const TARGET_PROGRESS = 0.5;
   const PROGRESS_EPSILON = 0.003;
+  const TRANSITION_TEXTURE_URL = "images/06/project-03-transition.png";
   const params = new URLSearchParams(window.location.search);
   if (params.get("project03Case001") === "off") return;
 
@@ -477,6 +478,13 @@
     view: null,
     face: "front",
     status: "mounting",
+    transitionTexture: null,
+    transitionTextureLoading: false,
+    transitionProxyReady: false,
+    transitionProxyActive: false,
+    transitionProxyError: null,
+    pageMaterial: null,
+    originalPageTexture: null,
   };
   window.__PROJECT03_CASE001__ = state;
 
@@ -768,6 +776,55 @@
     return window.Main && window.Main.maskRevealView;
   }
 
+  function ensureTransitionProxy(view) {
+    if (state.transitionTexture || state.transitionTextureLoading || !window.THREE) return;
+    const pageMaterial = view && view.pageMaterials && view.pageMaterials[PAGE_INDEX - 1];
+    if (!pageMaterial || !pageMaterial.map) return;
+
+    state.pageMaterial = pageMaterial;
+    state.originalPageTexture = pageMaterial.textures && pageMaterial.textures[0]
+      ? pageMaterial.textures[0]
+      : pageMaterial.map;
+    state.transitionTextureLoading = true;
+    const transitionLoadingManager = new window.THREE.LoadingManager();
+    new window.THREE.TextureLoader(transitionLoadingManager).load(
+      TRANSITION_TEXTURE_URL,
+      (texture) => {
+        const original = state.originalPageTexture;
+        texture.flipY = original.flipY;
+        texture.encoding = original.encoding;
+        texture.anisotropy = original.anisotropy;
+        texture.wrapS = original.wrapS;
+        texture.wrapT = original.wrapT;
+        texture.minFilter = original.minFilter;
+        texture.magFilter = original.magFilter;
+        texture.needsUpdate = true;
+        state.transitionTexture = texture;
+        state.transitionTextureLoading = false;
+        state.transitionProxyReady = true;
+      },
+      undefined,
+      (error) => {
+        state.transitionTextureLoading = false;
+        state.transitionProxyError = error && error.message
+          ? error.message
+          : "transition texture failed to load";
+      },
+    );
+  }
+
+  function setTransitionProxyVisible(view, visible) {
+    ensureTransitionProxy(view);
+    const material = state.pageMaterial;
+    const texture = visible ? state.transitionTexture : state.originalPageTexture;
+    if (!material || !texture || state.transitionProxyActive === visible) return;
+
+    material.map = texture;
+    const shader = material.userData && material.userData.shader;
+    if (shader && shader.uniforms && shader.uniforms.map) shader.uniforms.map.value = texture;
+    state.transitionProxyActive = visible;
+  }
+
   function isStableProject03(view) {
     const state = getPageEmbedState(view);
     return state.stable;
@@ -833,26 +890,29 @@
     if (view) state.view = view;
     const embedState = getPageEmbedState(view);
     const active = embedState.stable;
-    if (embedState.occupied) {
+    setTransitionProxyVisible(view, !active && embedState.occupied);
+    if (active) {
       positionRoot(view);
-      setPageLocalPose(embedState);
-      state.active = active;
+      setPageLocalPose({ stable: true, phase: 1, direction: 0 });
+      state.active = true;
       state.occupying = true;
-      state.status = active ? "active" : "flipping-with-page";
-      root.classList.toggle("is-flipping", !active);
+      state.status = "active";
+      root.classList.remove("is-flipping");
       root.classList.add("is-visible");
-      root.classList.toggle("is-interactive", active);
-      root.setAttribute("aria-hidden", active ? "false" : "true");
+      root.classList.add("is-interactive");
+      root.setAttribute("aria-hidden", "false");
     } else if (state.occupying) {
       state.active = false;
       state.occupying = false;
-      state.status = "hidden";
+      state.status = embedState.occupied ? "page-texture-proxy" : "hidden";
       root.classList.remove("is-visible", "is-interactive", "is-flipping");
       root.setAttribute("aria-hidden", "true");
       resetCard();
       setPageLocalPose({ stable: true, phase: 1, direction: 0 });
     } else if (!view) {
       state.status = "waiting-for-view";
+    } else if (embedState.occupied) {
+      state.status = state.transitionProxyReady ? "page-texture-proxy" : "page-texture-loading";
     } else {
       state.status = "outside-page-window";
     }
@@ -866,6 +926,7 @@
       root.classList.remove("is-visible", "is-interactive");
       resetCard();
     }
+    if (document.hidden) setTransitionProxyVisible(state.view, false);
   });
 
   updateCard();
