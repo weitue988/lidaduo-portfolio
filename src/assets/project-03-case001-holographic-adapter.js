@@ -74,6 +74,10 @@
       visibility: visible;
     }
 
+    #project03Case001Root.is-handoff {
+      transition: none;
+    }
+
     #project03Case001Root .p03-showcase {
       transform: translate3d(var(--p03-page-x), var(--p03-page-y), 0)
         rotateY(var(--p03-page-rotate))
@@ -482,6 +486,9 @@
     transitionTextureLoading: false,
     transitionProxyReady: false,
     transitionProxyActive: false,
+    transitionProxyPaintReady: false,
+    transitionProxyPaintToken: 0,
+    handoffClassFrame: 0,
     transitionProxyError: null,
     pageMaterial: null,
     originalPageTexture: null,
@@ -799,6 +806,9 @@
         texture.minFilter = original.minFilter;
         texture.magFilter = original.magFilter;
         texture.needsUpdate = true;
+        if (view.renderer && typeof view.renderer.initTexture === "function") {
+          view.renderer.initTexture(texture);
+        }
         state.transitionTexture = texture;
         state.transitionTextureLoading = false;
         state.transitionProxyReady = true;
@@ -823,6 +833,29 @@
     const shader = material.userData && material.userData.shader;
     if (shader && shader.uniforms && shader.uniforms.map) shader.uniforms.map.value = texture;
     state.transitionProxyActive = visible;
+    state.transitionProxyPaintReady = false;
+    state.transitionProxyPaintToken += 1;
+
+    if (visible) {
+      const paintToken = state.transitionProxyPaintToken;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (state.transitionProxyActive && state.transitionProxyPaintToken === paintToken) {
+            state.transitionProxyPaintReady = true;
+          }
+        });
+      });
+    }
+  }
+
+  function setRootVisibleImmediately(visible) {
+    if (root.classList.contains("is-visible") === visible) return;
+    cancelAnimationFrame(state.handoffClassFrame);
+    root.classList.add("is-handoff");
+    root.classList.toggle("is-visible", visible);
+    state.handoffClassFrame = requestAnimationFrame(() => {
+      root.classList.remove("is-handoff");
+    });
   }
 
   function isStableProject03(view) {
@@ -898,14 +931,27 @@
       state.occupying = true;
       state.status = "active";
       root.classList.remove("is-flipping");
-      root.classList.add("is-visible");
+      setRootVisibleImmediately(true);
       root.classList.add("is-interactive");
       root.setAttribute("aria-hidden", "false");
+    } else if (embedState.occupied && (!state.transitionProxyActive || !state.transitionProxyPaintReady)) {
+      // Preserve coverage until the page-bound texture has survived two
+      // render frames. This branch lasts only at the near-flat handoff edge.
+      positionRoot(view);
+      setPageLocalPose(embedState);
+      state.active = false;
+      state.occupying = true;
+      state.status = "handoff-waiting-for-proxy";
+      root.classList.add("is-flipping");
+      setRootVisibleImmediately(true);
+      root.classList.remove("is-interactive");
+      root.setAttribute("aria-hidden", "true");
     } else if (state.occupying) {
       state.active = false;
       state.occupying = false;
       state.status = embedState.occupied ? "page-texture-proxy" : "hidden";
-      root.classList.remove("is-visible", "is-interactive", "is-flipping");
+      setRootVisibleImmediately(false);
+      root.classList.remove("is-interactive", "is-flipping");
       root.setAttribute("aria-hidden", "true");
       resetCard();
       setPageLocalPose({ stable: true, phase: 1, direction: 0 });

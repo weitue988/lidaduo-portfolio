@@ -77,7 +77,11 @@ async function setMidpoint(direction, fraction) {
     view.currPageIndex = moveDirection === "forward" ? 7 : 6;
     view.flipTimeline.progress(targetProgress);
   }, { direction, progress });
-  await page.waitForTimeout(120);
+  await page.waitForFunction(
+    () => window.__PROJECT03_CASE001__?.status === "page-texture-proxy",
+    null,
+    { timeout: 2_000 },
+  );
 }
 
 async function readState(label) {
@@ -108,6 +112,55 @@ async function readState(label) {
   return state;
 }
 
+async function sampleHandoff(fromIndex, toIndex, label) {
+  await settle(fromIndex);
+  return page.evaluate(async ({ fromIndex: startIndex, toIndex: endIndex, sampleLabel }) => {
+    const view = window.Main.maskRevealView;
+    const root = document.querySelector("#project03Case001Root");
+    const pageCount = Number(view.pageDatas.length) + 1;
+    const target = 0.5;
+    const segment = 1 / pageCount;
+    const samples = [];
+
+    view.setCurrentPage(endIndex);
+    const startedAt = performance.now();
+    while (performance.now() - startedAt < 1750) {
+      await new Promise(requestAnimationFrame);
+      const progress = view.flipTimeline.progress();
+      const delta = progress - target;
+      const phase = delta < 0
+        ? Math.max(0, Math.min(1, (delta + segment) / segment))
+        : Math.max(0, Math.min(1, 1 - delta / segment));
+      const occupied = phase > 0.003 || Math.abs(delta) < 0.003;
+      if (!occupied) continue;
+
+      const style = root ? getComputedStyle(root) : null;
+      const runtime = window.__PROJECT03_CASE001__ || null;
+      const domVisible = style?.visibility === "visible" && Number(style.opacity) > 0.01;
+      const proxyVisible = runtime?.transitionProxyActive === true;
+      samples.push({
+        elapsed: performance.now() - startedAt,
+        progress,
+        phase,
+        domVisible,
+        proxyVisible,
+        covered: domVisible || proxyVisible,
+        status: runtime?.status || null,
+      });
+    }
+
+    return {
+      label: sampleLabel,
+      fromIndex: startIndex,
+      toIndex: endIndex,
+      sampleCount: samples.length,
+      uncoveredFrames: samples.filter((sample) => !sample.covered),
+      firstSamples: samples.slice(0, 12),
+      lastSamples: samples.slice(-12),
+    };
+  }, { fromIndex, toIndex, label });
+}
+
 async function dragPage(direction) {
   const canvasBox = await page.locator("canvas").boundingBox();
   if (!canvasBox) throw new Error("Book canvas has no bounding box");
@@ -124,6 +177,11 @@ async function dragPage(direction) {
 const states = [];
 await settle(6);
 states.push(await readState("01-project03-stable-start"));
+
+const handoffSamples = [
+  await sampleHandoff(6, 7, "handoff-forward"),
+  await sampleHandoff(7, 6, "handoff-reverse"),
+];
 
 for (const direction of ["forward", "reverse"]) {
   for (const fraction of [0.2, 0.5, 0.8]) {
@@ -167,15 +225,19 @@ await page.setViewportSize({ width: 1280, height: 800 });
 await page.waitForTimeout(300);
 states.push(await readState("interaction-resize-project03-stable"));
 
-const result = { url, viewport: { width: 1280, height: 800 }, states, errors };
+const result = { url, viewport: { width: 1280, height: 800 }, states, handoffSamples, errors };
 await writeFile(`${output}/MOTION_QA.json`, `${JSON.stringify(result, null, 2)}\n`);
-await browser.close();
+await Promise.race([
+  browser.close(),
+  new Promise((resolveClose) => setTimeout(resolveClose, 3000)),
+]);
 
 const midpointStates = states.filter((state) => /^(forward|reverse)-(020|050|080)$/.test(state.label));
 const passed =
   errors.length === 0 &&
   states.every((state) => state.canvasCount === 1 && state.pageDataCount === 11 && state.pageMeshCount === 11) &&
   midpointStates.every((state) => state.project03Visibility === "hidden" && state.transitionProxyReady && state.transitionProxyActive) &&
+  handoffSamples.every((sample) => sample.sampleCount > 5 && sample.uncoveredFrames.length === 0) &&
   states.every((state) => !state.transitionProxyError) &&
   states.some((state) => state.label === "01-project03-stable-start" && state.project03Visibility === "visible" && Number(state.project03Opacity) > 0.95 && !state.transitionProxyActive) &&
   states.some((state) => state.label === "forward-stable-end" && state.index === 7) &&
@@ -189,7 +251,8 @@ const passed =
 
 if (!passed) {
   process.stderr.write(`${JSON.stringify(result, null, 2)}\n`);
-  process.exitCode = 1;
+  process.exit(1);
 } else {
   process.stdout.write(`verified Project-03 page-bound flip handoff at ${url}\n`);
+  process.exit(0);
 }
